@@ -1,0 +1,211 @@
+import java.util.ArrayList;
+import java.util.Scanner;
+
+class Account {
+    private String accountNumber;
+    private String accountHolderName;
+    private double balance;
+
+    public Account(String accNum, String holderName, double initialBalance) {
+        this.accountNumber = accNum;
+        this.accountHolderName = holderName;
+        this.balance = initialBalance;
+    }
+
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public String getAccountHolderName() {
+        return accountHolderName;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+
+    public void deposit(double amount) {
+        if (amount <= 0) {
+            System.out.println("Deposit must be a positive value.");
+            return;
+        }
+        balance += amount;
+        System.out.println("Amount $" + amount + " deposited. New balance: $" + balance);
+    }
+
+    public boolean withdraw(double amount) {
+        if (amount <= 0) {
+            System.out.println("Withdrawal amount must be positive.");
+            return false;
+        }
+        if (amount > balance) {
+            System.out.println("Insufficient balance.");
+            return false;
+        }
+        balance -= amount;
+        System.out.println("Amount $" + amount + " withdrawn. Remaining balance: $" + balance);
+        return true;
+    }
+
+    public void displayDetails() {
+        System.out.println("Account Number: " + accountNumber);
+        System.out.println("Holder Name: " + accountHolderName);
+        System.out.println("Balance: $" + String.format("%.2f", balance));
+    }
+}
+
+class Bank {
+    private ArrayList<Account> accounts;
+    private int nextAccNumber;
+
+    public Bank() {
+        accounts = new ArrayList<>();
+        nextAccNumber = 1000;
+    }
+
+    public void createAccount(String name, double initialBalance) {
+        if (initialBalance < 0) {
+            System.out.println("Initial deposit cannot be negative.");
+            return;
+        }
+
+        String accNum = "ACC" + nextAccNumber++;
+        Account newAcc = new Account(accNum, name.trim(), initialBalance);
+        accounts.add(newAcc);
+
+        System.out.println("Account created successfully!");
+        newAcc.displayDetails();
+    }
+
+    private Account findAccount(String accNum) {
+        for (Account acc : accounts) {
+            if (acc.getAccountNumber().equalsIgnoreCase(accNum.trim())) {
+                return acc;
+            }
+        }
+        return null;
+    }
+
+    public void deposit(String accNum, double amount) {
+        Account acc = findAccount(accNum);
+        if (acc != null) {
+            acc.deposit(amount);
+        } else {
+            System.out.println("Account not found.");
+        }
+    }
+
+    public void withdraw(String accNum, double amount) {
+        Account acc = findAccount(accNum);
+        if (acc != null) {
+            acc.withdraw(amount);
+        } else {
+            System.out.println("Account not found.");
+        }
+    }
+
+    public void transfer(String fromAccNum, String toAccNum, double amount) {
+        Account from = findAccount(fromAccNum);
+        Account to = findAccount(toAccNum);
+
+        if (from == null || to == null) {
+            System.out.println("One or both account numbers are invalid.");
+            return;
+        }
+
+        if (from.withdraw(amount)) {
+            to.deposit(amount);
+            System.out.println("Transfer successful!");
+        } else {
+            System.out.println("Transfer failed due to insufficient funds.");
+        }
+    }
+
+    public void checkBalance(String accNum) {
+        Account acc = findAccount(accNum);
+        if (acc != null) {
+            acc.displayDetails();
+        } else {
+            System.out.println("Account not found.");
+        }
+    }
+}
+
+public class BankingSystem {
+    private static double readAmount(Scanner sc, String msg) {
+        double amount = -1;
+        while (amount < 0) {
+            System.out.print(msg);
+            try {
+                amount = Double.parseDouble(sc.nextLine().trim());
+                if (amount < 0) System.out.println("Amount must be non-negative.");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number format. Try again.");
+            }
+        }
+        return amount;
+    }
+
+    public static void main(String[] args) {
+        Bank bank = new Bank();
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n=== Banking Menu ===");
+            System.out.println("1. Create Account");
+            System.out.println("2. Deposit");
+            System.out.println("3. Withdraw");
+            System.out.println("4. Transfer");
+            System.out.println("5. Check Balance");
+            System.out.println("6. Exit");
+            System.out.print("Choose an option (1-6): ");
+
+            String input = sc.nextLine().trim();
+            switch (input) {
+                case "1":
+                    System.out.print("Enter account holder's name: ");
+                    String name = sc.nextLine();
+                    double initBal = readAmount(sc, "Enter initial balance: ");
+                    bank.createAccount(name, initBal);
+                    break;
+
+                case "2":
+                    System.out.print("Enter account number: ");
+                    String depAcc = sc.nextLine();
+                    double depAmt = readAmount(sc, "Enter deposit amount: ");
+                    bank.deposit(depAcc, depAmt);
+                    break;
+
+                case "3":
+                    System.out.print("Enter account number: ");
+                    String withAcc = sc.nextLine();
+                    double withAmt = readAmount(sc, "Enter amount to withdraw: ");
+                    bank.withdraw(withAcc, withAmt);
+                    break;
+
+                case "4":
+                    System.out.print("From account number: ");
+                    String from = sc.nextLine();
+                    System.out.print("To account number: ");
+                    String to = sc.nextLine();
+                    double transAmt = readAmount(sc, "Enter transfer amount: ");
+                    bank.transfer(from, to, transAmt);
+                    break;
+
+                case "5":
+                    System.out.print("Enter account number: ");
+                    String chkAcc = sc.nextLine();
+                    bank.checkBalance(chkAcc);
+                    break;
+
+                case "6":
+                    System.out.println("Thank you for banking with us.");
+                    sc.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid choice. Please enter a number from 1 to 6.");
+            }
+        }
+    }
+}
